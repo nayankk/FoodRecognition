@@ -15,16 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import gc
-
-def plotHistogram(data):
-    plt.hist(data,50)
-    plt.show()
-
-def plotKeypoints(imgPath, kp):
-    img = cv2.imread(imgPath)
-    imgShow = cv2.drawKeypoints(img, kp, None, (255,0,0), 4)
-    plt.imshow(imgShow)
-    plt.show()
+import Utils
 
 def findSurfDescriptor(filename):
     img = cv2.imread(filename)
