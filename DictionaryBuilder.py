@@ -34,7 +34,7 @@ def buildDictionary(rootPath):
                 surfDes = np.vstack((surfDes, surfDesRow))
 
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    ret,label,center=cv2.kmeans(np.float32(surfDes), 50, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+    ret,label,center=cv2.kmeans(np.float32(surfDes), 100, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
     del surfDes
     gc.collect()
     return center

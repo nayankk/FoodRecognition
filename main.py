@@ -4,9 +4,10 @@
 
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 import os
 import gc
+import svm
+import svmutil
 import DictionaryBuilder
 
 categories = {}
@@ -15,6 +16,7 @@ categories["Sub"] = 2
 categories["Pizza"] = 3
 categories["Salad"] = 4
 categories["Sandwich"] = 5
+categories["Burger"] = 6
 
 def train(trainingRootDir, dictionary):
     print "Training.."
@@ -30,7 +32,7 @@ def train(trainingRootDir, dictionary):
                 labels.append(categories[tail])
 
                 # Build histogram
-                histogram = [0] * 50
+                histogram = [0] * 100
                 des = DictionaryBuilder.findSurfDescriptor(filename)
                 for oneFeature in des:
                     min = float("inf")
@@ -49,22 +51,15 @@ def train(trainingRootDir, dictionary):
                 # Add it to training data
                 trainingData.append(histogram)
 
-    svm_params = dict( kernel_type = cv2.SVM_LINEAR,
-                       svm_type = cv2.SVM_C_SVC,
-                       C=80, gamma=1 )
-    svm = cv2.SVM()
-    svm.train(np.float32(trainingData), np.array(labels), params=svm_params)
+    model = svmutil.svm_train(labels, trainingData, '-s 0 -t 0 -g 1 -c 100')
 
     # Testing
-    print "Testing.."
-    result = svm.predict_all(np.float32(trainingData))
+    result, acc, vals = svmutil.svm_predict(labels, trainingData, model)
+    print acc
 
-    # Check accuracy on trained labels
-    mask = result.reshape(-1)==labels
-    correct = np.count_nonzero(mask)
-    print correct*100.0/result.size
+    svmutil.svm_save_model("mymodel.model", model)
 
-    return svm
+    return model
 
 def test(testingRootDir, dictionary, model):
     print "Testing..."
@@ -80,7 +75,7 @@ def test(testingRootDir, dictionary, model):
                 labels.append(categories[tail])
 
                 # Build histogram
-                histogram = [0] * 50
+                histogram = [0] * 100
                 des = DictionaryBuilder.findSurfDescriptor(filename)
                 for oneFeature in des:
                     min = float("inf")
@@ -99,11 +94,8 @@ def test(testingRootDir, dictionary, model):
                 # Add it to training data
                 testingData.append(histogram)
 
-    result = model.predict_all(np.float32(testingData))
-    # Check accuracy on trained labels
-    mask = result.reshape(-1)==labels
-    correct = np.count_nonzero(mask)
-    print correct*100.0/result.size
+    result, acc, vals = svmutil.svm_predict(labels, testingData, model)
+    print acc
 
 def main():
     root = "/Users/qtc746/Documents/Courses/ComputerVision/Project/Dataset/Dictionary/"
