@@ -39,6 +39,20 @@ def buildDictionary(rootPath):
     gc.collect()
     return center
 
+def buildDictionaryFromFiles(dictionaryfiles, k):
+    surfDes = np.empty([1,64])
+    for filename in dictionaryfiles:
+        surfDesRow = findSurfDescriptor(filename)
+        surfDes = np.vstack((surfDes, surfDesRow))
+        
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    ret,label,center=cv2.kmeans(np.float32(surfDes), k, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+    del surfDes
+    gc.collect()
+    print "Dictionary built, size = ", center.shape
+    return center
+        
+
 def main():
     root = "/Users/qtc746/Documents/Courses/ComputerVision/Project/Dataset/Dictionary/"
     center = buildDictionary(root)
