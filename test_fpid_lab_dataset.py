@@ -34,7 +34,7 @@ def train(trainingLabels, trainingFiles, dictionary, k):
         # Add it to training data
         trainingData.append(histogram)
 
-    model = svmutil.svm_train(trainingLabels, trainingData, '-s 0 -t 0 -g 1 -c 100')
+    model = svmutil.svm_train(trainingLabels, trainingData, '-s 0 -t 0 -g 1 -c 50')
 
     # Testing
     result, acc, vals = svmutil.svm_predict(trainingLabels, trainingData, model)
@@ -77,12 +77,25 @@ def test(testingLabels, testingFiles, model, dictionary, k):
 
 def main():
     print "Starting to build train set and test set"
-    #rootDir = "/Users/qtc746/Documents/Courses/ComputerVision/FPID_Restuarant_Stills"
+    rootDir = "/Users/qtc746/Documents/Courses/ComputerVision/FPID_Restuarant_Stills"
+    trainfiles1, trainlabels1, testfiles1, testlabels1, dictionaryfiles1 = parseDataset.buildTrainAndTestFiles(rootDir, True)
     rootDir = "/Users/qtc746/Documents/Courses/ComputerVision/FPID_Lab_Stills"
-    trainfiles, trainlabels, testfiles, testlabels, dictionaryfiles = parseDataset.buildTrainAndTestFiles(rootDir)
-    dictionary = DictionaryBuilder.buildDictionaryFromFiles(dictionaryfiles, 200)
-    model = train(trainlabels, trainfiles, dictionary, 200)
-    test(testlabels, testfiles, model, dictionary, 200)
+    trainfiles2, trainlabels2, testfiles2, testlabels2, dictionaryfiles2 = parseDataset.buildTrainAndTestFiles(rootDir, False)
+    trainfiles = trainfiles1 + trainfiles2
+    trainlabels = trainlabels1 + trainlabels2
+    testfiles = testfiles1 + testfiles2
+    testlabels = testlabels1 + testlabels2
+    dictionaryfiles = dictionaryfiles1 + dictionaryfiles2
+
+    print "Total categories = ", len(set(trainfiles))
+    print "Total train files = ", len(trainfiles), len(trainlabels)
+    print "Total test files = ", len(testfiles), len(testlabels)
+    print "Total dictionary files = ", len(dictionaryfiles)
+
+    k = 256
+    dictionary = DictionaryBuilder.buildDictionaryFromFiles(dictionaryfiles, k)
+    model = train(trainlabels, trainfiles, dictionary, k)
+    test(testlabels, testfiles, model, dictionary, k)
 
 if __name__ == "__main__":
     main()
