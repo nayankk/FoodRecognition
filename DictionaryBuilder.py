@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import os
 import gc
 import Utils
+from sklearn import cluster
 
 def findSurfDescriptor(filename):
     img = cv2.imread(filename)
@@ -40,15 +41,25 @@ def buildDictionary(rootPath):
     return center
 
 def buildDictionaryFromFiles(dictionaryfiles, k):
-    surfDes = np.empty([1,64])
-    for filename in dictionaryfiles:
-        surfDesRow = findSurfDescriptor(filename)
-        surfDes = np.vstack((surfDes, surfDesRow))
-        
+    surfAllDes = np.empty([1,64])
+    for filenameList in dictionaryfiles:
+        surfDes = np.empty([1,64])
+        for filename in filenameList:
+            surfDesRow = findSurfDescriptor(filename)
+            if len(surfDes) == 1:
+                surfDes = surfDesRow
+            else:
+                surfDes = np.vstack((surfDes, surfDesRow))
+
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+        ret,label,center=cv2.kmeans(np.float32(surfDes), 30, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+        if len(surfAllDes) == 1:
+            surfAllDes = center
+        else:
+            surfAllDes = np.vstack((surfAllDes, center))
+
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    ret,label,center=cv2.kmeans(np.float32(surfDes), k, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-    del surfDes
-    gc.collect()
+    ret,label,center=cv2.kmeans(np.float32(surfAllDes), k, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
     print "Dictionary built, size = ", center.shape
     return center
         

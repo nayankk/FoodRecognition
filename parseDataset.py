@@ -33,8 +33,10 @@ def buildTrainAndTestFiles(rootDir):
                                     first = rootDir + "/" + name + "/" + item + "/images/restaurant/inst " + str(i+1) + "/" + image
                                 last = rootDir + "/" + name + "/" + item + "/images/restaurant/inst " + str(i+1) + "/" + image
 
-                    dictionaryfiles.append(first)
-                    dictionaryfiles.append(last)
+                    tempList = []
+                    tempList.append(first)
+                    tempList.append(last)
+                    dictionaryfiles.append(tempList)
 
                     for i in range(testSetLen):
                         images = os.listdir(rootDir + "/" + name + "/" + item + "/images/restaurant/inst " + str(trainSetLen+i+1) + "/")
