@@ -10,11 +10,13 @@ import svmutil
 def train(trainingLabels, trainingFiles, dictionary, k):
     print "Training.."
     trainingData = []
-
     for filename in trainingFiles:
         # Build histogram
         histogram = [0] * k
         des = DictionaryBuilder.findSurfDescriptor(filename)
+        if des is None:
+            trainingData.append(histogram)
+            continue
         for oneFeature in des:
             min = float("inf")
             for index, oneWord in enumerate(dictionary):
@@ -50,6 +52,9 @@ def test(testingLabels, testingFiles, model, dictionary, k):
         # Build histogram
         histogram = [0] * k
         des = DictionaryBuilder.findSurfDescriptor(filename)
+        if des is None:
+            testingData.append(histogram)
+            continue
         for oneFeature in des:
             min = float("inf")
             for index, oneWord in enumerate(dictionary):
@@ -72,8 +77,8 @@ def test(testingLabels, testingFiles, model, dictionary, k):
 
 def main():
     print "Starting to build train set and test set"
-    rootDir = "/Users/qtc746/Documents/Courses/ComputerVision/FPID_Restuarant_Stills"
-    #rootDir = "/Users/qtc746/Documents/Courses/ComputerVision/FPID_Lab_Stills"
+    #rootDir = "/Users/qtc746/Documents/Courses/ComputerVision/FPID_Restuarant_Stills"
+    rootDir = "/Users/qtc746/Documents/Courses/ComputerVision/FPID_Lab_Stills"
     trainfiles, trainlabels, testfiles, testlabels, dictionaryfiles = parseDataset.buildTrainAndTestFiles(rootDir)
     dictionary = DictionaryBuilder.buildDictionaryFromFiles(dictionaryfiles, 200)
     model = train(trainlabels, trainfiles, dictionary, 200)

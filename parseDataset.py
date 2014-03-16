@@ -18,20 +18,20 @@ def buildTrainAndTestFiles(rootDir):
             items = os.listdir(rootDir + "/" + name)
             for item in items:
                 if os.path.isdir(rootDir + "/" + name + "/" + item):
-                    totalSet = len(os.listdir(rootDir + "/" + name + "/" + item + "/images/restaurant/"))
+                    totalSet = len(os.listdir(rootDir + "/" + name + "/" + item + "/images/still/"))
                     trainSetLen = int(round(totalSet * 3.0/4))
                     testSetLen = totalSet - trainSetLen
                     first = ''
                     last = ''
                     for i in range(trainSetLen):
-                        images = os.listdir(rootDir + "/" + name + "/" + item + "/images/restaurant/inst " + str(i+1) + "/")
+                        images = os.listdir(rootDir + "/" + name + "/" + item + "/images/still/inst " + str(i+1) + "/")
                         for image in images:
                             if image.endswith("thumb.jpg"):
-                                trainFiles.append(rootDir + "/" + name + "/" + item + "/images/restaurant/inst " + str(i+1) + "/" + image)
+                                trainFiles.append(rootDir + "/" + name + "/" + item + "/images/still/inst " + str(i+1) + "/" + image)
                                 trainLabels.append(int(name + item))
                                 if not first:
-                                    first = rootDir + "/" + name + "/" + item + "/images/restaurant/inst " + str(i+1) + "/" + image
-                                last = rootDir + "/" + name + "/" + item + "/images/restaurant/inst " + str(i+1) + "/" + image
+                                    first = rootDir + "/" + name + "/" + item + "/images/still/inst " + str(i+1) + "/" + image
+                                last = rootDir + "/" + name + "/" + item + "/images/still/inst " + str(i+1) + "/" + image
 
                     tempList = []
                     tempList.append(first)
@@ -39,10 +39,10 @@ def buildTrainAndTestFiles(rootDir):
                     dictionaryfiles.append(tempList)
 
                     for i in range(testSetLen):
-                        images = os.listdir(rootDir + "/" + name + "/" + item + "/images/restaurant/inst " + str(trainSetLen+i+1) + "/")
+                        images = os.listdir(rootDir + "/" + name + "/" + item + "/images/still/inst " + str(trainSetLen+i+1) + "/")
                         for image in images:
                             if image.endswith("thumb.jpg"):
-                                testFiles.append(rootDir + "/" + name + "/" + item + "/images/restaurant/inst " + str(trainSetLen+i+1) + "/" + image)
+                                testFiles.append(rootDir + "/" + name + "/" + item + "/images/still/inst " + str(trainSetLen+i+1) + "/" + image)
                                 testLabels.append(int(name + item))
 
     print "Train files length =", len(trainFiles)
