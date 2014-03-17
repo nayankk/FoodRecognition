@@ -99,6 +99,7 @@ def test(testingRootDir, dictionary, model):
 
 def main():
     root = "/Users/qtc746/Documents/Courses/ComputerVision/Project/Dataset/Dictionary/"
+    print "Building dictionary"
     dictionary = DictionaryBuilder.buildDictionary(root)
     print "Dictionary built",
     print dictionary.shape

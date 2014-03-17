@@ -32,7 +32,10 @@ def buildDictionary(rootPath):
             if filename.endswith("_thumb.jpg"):
                 filename = os.path.join(path, filename)
                 surfDesRow = findSurfDescriptor(filename)
-                surfDes = np.vstack((surfDes, surfDesRow))
+                if len(surfDes) == 1:
+                    surfDes = surfDesRow
+                else:
+                    surfDes = np.vstack((surfDes, surfDesRow))
 
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
     ret,label,center=cv2.kmeans(np.float32(surfDes), 100, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
