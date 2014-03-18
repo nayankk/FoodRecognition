@@ -64,7 +64,7 @@ def build_dictionary(dictionary_files, dictionary_size, is_extended):
     gc.collect()
     return center
 
-def get_normalized_histogram(filename, is_extended, dictionary):
+def get_normalized_histogram(filename, is_extended, dictionary, spm_levels):
     size = dictionary.shape[0]
     histogram = [0] * size
     des = find_surf_descriptor(filename, is_extended)
@@ -84,16 +84,16 @@ def get_normalized_histogram(filename, is_extended, dictionary):
 
     return histogram
 
-def train(dictionary, train_file_list, train_labels, is_extended):
+def train(dictionary, train_file_list, train_labels, is_extended, spm_levels):
     training_data = []
     for filename in train_file_list:
-        training_data.append(get_normalized_histogram(filename, is_extended, dictionary))
+        training_data.append(get_normalized_histogram(filename, is_extended, dictionary, spm_levels))
     model = svmutil.svm_train(train_labels, training_data, '-s 0 -t 0 -g 1 -c 100')
     result, acc, vals = svmutil.svm_predict(train_labels, training_data, model)
     print acc
     return  model
 
-def test(dictionary, test_file_list, test_labels, is_extended, model):
+def test(dictionary, test_file_list, test_labels, is_extended, model, spm_levels):
     testing_data = []
     for filename in test_file_list:
         testing_data.append(get_normalized_histogram(filename, is_extended, dictionary))
@@ -105,11 +105,10 @@ def spm_classification(dictionary_size, spm_levels, is_extended, root_folder):
     dictionary = build_dictionary(dictionary_files, dictionary_size, is_extended)
     print "Dictionary built", dictionary.shape
     print "Now traning.."
-    model = train(dictionary, train_file_list, train_labels, is_extended)
+    model = train(dictionary, train_file_list, train_labels, is_extended, spm_levels)
     print "Now testing.."
-    test(dictionary, test_file_list, test_labels, is_extended, model)
+    test(dictionary, test_file_list, test_labels, is_extended, model, spm_levels)
     
-
 def main():
     print "SPM based classification scheme"
     parser = argparse.ArgumentParser(description='SPM based classification')
