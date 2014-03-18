@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import gc
 import svmutil
+import Image
 
 def parse_small_dataset(root_folder):
     train_file_list = []
@@ -64,18 +65,84 @@ def build_dictionary(dictionary_files, dictionary_size, is_extended):
     gc.collect()
     return center
 
-def get_normalized_histogram(filename, is_extended, dictionary, spm_levels):
+def slice_image(filename):
+    slices = []
+    temp_folder = "/Users/qtc746/Documents/Courses/ComputerVision/Project/temp"
+    img = Image.open(filename)
+    width, height = img.size
+
+    left = 0
+    top = 0
+    right = width/2
+    bottom = height/2
+    bbox = (left, top, right, bottom)
+    new_img = img.crop(bbox)
+    filename1 = temp_folder + "/" + filename.split('/')[filename.count('/')].strip('.jpg') + "_" + "1.jpg"
+    new_img.save(filename1)
+
+    left = 0
+    top = height/2
+    right = width/2
+    bottom = height
+    bbox = (left, top, right, bottom)
+    new_img = img.crop(bbox)
+    filename2 = temp_folder + "/" + filename.split('/')[filename.count('/')].strip('.jpg') + "_" + "2.jpg"
+    new_img.save(filename2)
+
+    left = width/2
+    top = height/2
+    right = width
+    bottom = height
+    bbox = (left, top, right, bottom)
+    new_img = img.crop(bbox)
+    filename3 = temp_folder + "/" + filename.split('/')[filename.count('/')].strip('.jpg') + "_" + "3.jpg"
+    new_img.save(filename3)
+
+    left = width/2
+    top = 0
+    right = width
+    bottom = height/2
+    bbox = (left, top, right, bottom)
+    new_img = img.crop(bbox)
+    filename4 = temp_folder + "/" + filename.split('/')[filename.count('/')].strip('.jpg') + "_" + "4.jpg"
+    new_img.save(filename4)
+    
+    sliced_names = []
+    sliced_names.append(filename1)
+    sliced_names.append(filename2)
+    sliced_names.append(filename3)
+    sliced_names.append(filename4)
+
+    return sliced_names
+
+def get_histogram(filename, is_extended, dictionary):
     size = dictionary.shape[0]
     histogram = [0] * size
     des = find_surf_descriptor(filename, is_extended)
-    for one_feature in des:
-        min = float("inf")
-        for index, one_word in enumerate(dictionary):
-            distance = cv2.norm(one_feature - one_word)
-            if distance < min:
-                min = distance
-                best_match = index
-        histogram[best_match] = histogram[best_match] + 1
+    if des != None:
+        for one_feature in des:
+            min = float("inf")
+            for index, one_word in enumerate(dictionary):
+                distance = cv2.norm(one_feature - one_word)
+                if distance < min:
+                    min = distance
+                    best_match = index
+            histogram[best_match] = histogram[best_match] + 1
+    return histogram
+
+def get_normalized_histogram(filename, is_extended, dictionary, spm_levels):
+    histogram = []
+    histogram0 = get_histogram(filename, is_extended, dictionary)
+    histogram.extend(histogram0)
+
+    slices0 = slice_image(filename)
+    for slice0 in slices0:
+        histogram1 = get_histogram(slice0, is_extended, dictionary)
+        histogram.extend(histogram1)
+        slices1 = slice_image(slice0)
+        for slice1 in slices1:
+            histogram2 = get_histogram(slice1, is_extended, dictionary)
+            histogram.extend(histogram2)
                 
     # Normalize histogram
     total = sum(histogram)
@@ -88,7 +155,7 @@ def train(dictionary, train_file_list, train_labels, is_extended, spm_levels):
     training_data = []
     for filename in train_file_list:
         training_data.append(get_normalized_histogram(filename, is_extended, dictionary, spm_levels))
-    model = svmutil.svm_train(train_labels, training_data, '-s 0 -t 0 -g 1 -c 100')
+    model = svmutil.svm_train(train_labels, training_data, '-s 0 -t 0 -g 1 -c 120')
     result, acc, vals = svmutil.svm_predict(train_labels, training_data, model)
     print acc
     return  model
@@ -96,7 +163,7 @@ def train(dictionary, train_file_list, train_labels, is_extended, spm_levels):
 def test(dictionary, test_file_list, test_labels, is_extended, model, spm_levels):
     testing_data = []
     for filename in test_file_list:
-        testing_data.append(get_normalized_histogram(filename, is_extended, dictionary))
+        testing_data.append(get_normalized_histogram(filename, is_extended, dictionary, spm_levels))
     result, acc, vals = svmutil.svm_predict(test_labels, testing_data, model)
     print acc
 
