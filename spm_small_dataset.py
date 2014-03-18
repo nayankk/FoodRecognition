@@ -6,8 +6,9 @@ import argparse
 import cv2
 import numpy as np
 import gc
-import svmutil
 import Image
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score 
 
 def parse_small_dataset(root_folder):
     train_file_list = []
@@ -151,21 +152,27 @@ def get_normalized_histogram(filename, is_extended, dictionary, spm_levels):
 
     return histogram
 
+def kernel(x, y):
+    return np.dot(x, y.T)
+
 def train(dictionary, train_file_list, train_labels, is_extended, spm_levels):
     training_data = []
     for filename in train_file_list:
         training_data.append(get_normalized_histogram(filename, is_extended, dictionary, spm_levels))
-    model = svmutil.svm_train(train_labels, training_data, '-s 0 -t 0 -g 1 -c 120')
-    result, acc, vals = svmutil.svm_predict(train_labels, training_data, model)
-    print acc
+    model = SVC(C=120, kernel=kernel, gamma=1)
+    model.fit(training_data, train_labels)
+    result = model.predict(training_data)
+    acc = accuracy_score(result, train_labels)
+    print "Accuracy = ", acc * 100
     return  model
 
 def test(dictionary, test_file_list, test_labels, is_extended, model, spm_levels):
     testing_data = []
     for filename in test_file_list:
         testing_data.append(get_normalized_histogram(filename, is_extended, dictionary, spm_levels))
-    result, acc, vals = svmutil.svm_predict(test_labels, testing_data, model)
-    print acc
+    result = model.predict(testing_data)
+    acc = accuracy_score(result, test_labels)
+    print acc * 100
 
 def spm_classification(dictionary_size, spm_levels, is_extended, root_folder):
     train_file_list, train_labels, test_file_list, test_labels, dictionary_files = parse_small_dataset(root_folder)
