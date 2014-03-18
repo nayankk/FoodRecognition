@@ -134,15 +134,18 @@ def get_histogram(filename, is_extended, dictionary):
 def get_normalized_histogram(filename, is_extended, dictionary, spm_levels):
     histogram = []
     histogram0 = get_histogram(filename, is_extended, dictionary)
+    histogram0 = [float(x) * 1/4 for x in histogram0]
     histogram.extend(histogram0)
 
     slices0 = slice_image(filename)
     for slice0 in slices0:
         histogram1 = get_histogram(slice0, is_extended, dictionary)
+        histogram1 = [float(x) * 1/4 for x in histogram1]
         histogram.extend(histogram1)
         slices1 = slice_image(slice0)
         for slice1 in slices1:
             histogram2 = get_histogram(slice1, is_extended, dictionary)
+            histogram2 = [float(x) * 1/2 for x in histogram2]
             histogram.extend(histogram2)
                 
     # Normalize histogram
@@ -152,14 +155,23 @@ def get_normalized_histogram(filename, is_extended, dictionary, spm_levels):
 
     return histogram
 
-def kernel(x, y):
-    return np.dot(x, y.T)
+def spatial_pyramid_kernel(M, N):
+    m = M.shape[0]
+    n = N.shape[0]
+
+    result = np.zeros((m,n))
+    for i in range(m):
+        for j in range(n):
+            temp = np.sum(np.minimum(M[i], N[j]))
+            result[i][j] = temp
+
+    return result
 
 def train(dictionary, train_file_list, train_labels, is_extended, spm_levels):
     training_data = []
     for filename in train_file_list:
         training_data.append(get_normalized_histogram(filename, is_extended, dictionary, spm_levels))
-    model = SVC(C=120, kernel=kernel, gamma=1)
+    model = SVC(C=120, kernel=spatial_pyramid_kernel, gamma=1)
     model.fit(training_data, train_labels)
     result = model.predict(training_data)
     acc = accuracy_score(result, train_labels)
