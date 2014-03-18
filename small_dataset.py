@@ -80,8 +80,6 @@ def train(trainingRootDir, dictionary):
     result, acc, vals = svmutil.svm_predict(labels, trainingData, model)
     print acc
 
-    svmutil.svm_save_model("mymodel.model", model)
-
     return model
 
 def test(testingRootDir, dictionary, model):
