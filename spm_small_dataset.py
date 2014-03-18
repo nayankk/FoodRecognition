@@ -66,9 +66,8 @@ def build_dictionary(dictionary_files, dictionary_size, is_extended):
     gc.collect()
     return center
 
-def slice_image(filename):
+def slice_image(filename, temp_folder):
     slices = []
-    temp_folder = "/Users/qtc746/Documents/Courses/ComputerVision/Project/temp"
     img = Image.open(filename)
     width, height = img.size
 
@@ -131,18 +130,18 @@ def get_histogram(filename, is_extended, dictionary):
             histogram[best_match] = histogram[best_match] + 1
     return histogram
 
-def get_normalized_histogram(filename, is_extended, dictionary, spm_levels):
+def get_normalized_histogram(filename, is_extended, dictionary, spm_levels, temp_folder):
     histogram = []
     histogram0 = get_histogram(filename, is_extended, dictionary)
     histogram0 = [float(x) * 1/4 for x in histogram0]
     histogram.extend(histogram0)
 
-    slices0 = slice_image(filename)
+    slices0 = slice_image(filename, temp_folder)
     for slice0 in slices0:
         histogram1 = get_histogram(slice0, is_extended, dictionary)
         histogram1 = [float(x) * 1/4 for x in histogram1]
         histogram.extend(histogram1)
-        slices1 = slice_image(slice0)
+        slices1 = slice_image(slice0, temp_folder)
         for slice1 in slices1:
             histogram2 = get_histogram(slice1, is_extended, dictionary)
             histogram2 = [float(x) * 1/2 for x in histogram2]
@@ -167,10 +166,10 @@ def spatial_pyramid_kernel(M, N):
 
     return result
 
-def train(dictionary, train_file_list, train_labels, is_extended, spm_levels):
+def train(dictionary, train_file_list, train_labels, is_extended, spm_levels, temp_folder):
     training_data = []
     for filename in train_file_list:
-        training_data.append(get_normalized_histogram(filename, is_extended, dictionary, spm_levels))
+        training_data.append(get_normalized_histogram(filename, is_extended, dictionary, spm_levels, temp_folder))
     model = SVC(C=120, kernel=spatial_pyramid_kernel, gamma=1)
     model.fit(training_data, train_labels)
     result = model.predict(training_data)
@@ -178,22 +177,22 @@ def train(dictionary, train_file_list, train_labels, is_extended, spm_levels):
     print "Accuracy = ", acc * 100
     return  model
 
-def test(dictionary, test_file_list, test_labels, is_extended, model, spm_levels):
+def test(dictionary, test_file_list, test_labels, is_extended, model, spm_levels, temp_folder):
     testing_data = []
     for filename in test_file_list:
-        testing_data.append(get_normalized_histogram(filename, is_extended, dictionary, spm_levels))
+        testing_data.append(get_normalized_histogram(filename, is_extended, dictionary, spm_levels, temp_folder))
     result = model.predict(testing_data)
     acc = accuracy_score(result, test_labels)
     print acc * 100
 
-def spm_classification(dictionary_size, spm_levels, is_extended, root_folder):
+def spm_classification(dictionary_size, spm_levels, is_extended, root_folder, temp_folder):
     train_file_list, train_labels, test_file_list, test_labels, dictionary_files = parse_small_dataset(root_folder)
     dictionary = build_dictionary(dictionary_files, dictionary_size, is_extended)
     print "Dictionary built", dictionary.shape
     print "Now traning.."
-    model = train(dictionary, train_file_list, train_labels, is_extended, spm_levels)
+    model = train(dictionary, train_file_list, train_labels, is_extended, spm_levels, temp_folder)
     print "Now testing.."
-    test(dictionary, test_file_list, test_labels, is_extended, model, spm_levels)
+    test(dictionary, test_file_list, test_labels, is_extended, model, spm_levels, temp_folder)
     
 def main():
     print "SPM based classification scheme"
@@ -202,12 +201,14 @@ def main():
     parser.add_argument('-l', help="Number of SPM levels", default='3')
     parser.add_argument('-r', help="Root folder", default="/Users/qtc746/Documents/Courses/ComputerVision/Project/Dataset")
     parser.add_argument('-x', help="Use 128 length descriptors?", default=0)
+    parser.add_argument('-f', help="Temp folder to store intermediate results", default="/Users/qtc746/Documents/Courses/ComputerVision/Project/temP")
     args = parser.parse_args()
     dictionary_size = args.__dict__['k']
     spm_levels = args.__dict__['l']
     root_folder = args.__dict__['r']
     is_extended = args.__dict__['x']
-    spm_classification(dictionary_size, spm_levels, int(is_extended), root_folder)
+    temp_folder = args.__dict__['f']
+    spm_classification(dictionary_size, spm_levels, int(is_extended), root_folder, temp_folder)
 
 if __name__ == "__main__":
     main()
