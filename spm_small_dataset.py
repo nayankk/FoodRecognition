@@ -9,6 +9,7 @@ import gc
 import Image
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score 
+import parse_dataset
 
 def parse_small_dataset(root_folder):
     train_file_list = []
@@ -52,10 +53,15 @@ def find_surf_descriptor(filename, is_extended):
     return des
 
 def build_dictionary(dictionary_files, dictionary_size, is_extended):
-    surf_des = []
+    if is_extended == 1:
+        surf_des = np.empty([1,128])
+    else:
+        surf_des = np.empty([1,64])
     for filename in dictionary_files:
         surf_desc_row = find_surf_descriptor(filename, is_extended)
-        if len(surf_des) == 0:
+        if surf_desc_row is None:
+            continue
+        if len(surf_des) == 1:
             surf_des = surf_desc_row
         else:
             surf_des = np.vstack((surf_des, surf_desc_row))
@@ -149,6 +155,9 @@ def get_normalized_histogram(filename, is_extended, dictionary, spm_levels, temp
                 
     # Normalize histogram
     total = sum(histogram)
+    if total == 0:
+        return [0] * 21 * dictionary.shape[0]
+
     for i in range(len(histogram)):
         histogram[i] = float(histogram[i])/total
 
@@ -170,7 +179,7 @@ def train(dictionary, train_file_list, train_labels, is_extended, spm_levels, te
     training_data = []
     for filename in train_file_list:
         training_data.append(get_normalized_histogram(filename, is_extended, dictionary, spm_levels, temp_folder))
-    model = SVC(C=120, kernel=spatial_pyramid_kernel, gamma=1)
+    model = SVC(C=10, kernel=spatial_pyramid_kernel)
     model.fit(training_data, train_labels)
     result = model.predict(training_data)
     acc = accuracy_score(result, train_labels)
@@ -185,8 +194,35 @@ def test(dictionary, test_file_list, test_labels, is_extended, model, spm_levels
     acc = accuracy_score(result, test_labels)
     print acc * 100
 
-def spm_classification(dictionary_size, spm_levels, is_extended, root_folder, temp_folder):
-    train_file_list, train_labels, test_file_list, test_labels, dictionary_files = parse_small_dataset(root_folder)
+def parse_large_dataset(root_folder):
+    root_folder = "/Users/qtc746/Documents/Courses/ComputerVision/FPID_Restuarant_Stills"
+    trainfiles1, trainlabels1, testfiles1, testlabels1, dictionaryfiles1 = parse_dataset.buildTrainAndTestFiles(root_folder, True)
+    root_folder = "/Users/qtc746/Documents/Courses/ComputerVision/FPID_Lab_Stills"
+    trainfiles2, trainlabels2, testfiles2, testlabels2, dictionaryfiles2 = parse_dataset.buildTrainAndTestFiles(root_folder, False)
+    trainfiles = trainfiles1 + trainfiles2
+    trainlabels = trainlabels1 + trainlabels2
+    testfiles = testfiles1 + testfiles2
+    testlabels = testlabels1 + testlabels2
+    dictionaryfiles = []
+    for filenamelist in dictionaryfiles1:
+        for filename in filenamelist:
+            dictionaryfiles.append(filename)
+    for filenamelist in dictionaryfiles2:
+        for filename in filenamelist:
+            dictionaryfiles.append(filename)
+
+    print "Total categories = ", len(set(trainlabels))
+    print "Total train files = ", len(trainfiles)
+    print "Total test files = ", len(testfiles)
+    print "Total dictionary files = ", len(dictionaryfiles)
+
+    return trainfiles, trainlabels, testfiles, testlabels, dictionaryfiles
+
+def spm_classification(dictionary_size, spm_levels, is_extended, root_folder, temp_folder, large_dataset):
+    if large_dataset == 1:
+        train_file_list, train_labels, test_file_list, test_labels, dictionary_files = parse_large_dataset(root_folder)
+    else:
+        train_file_list, train_labels, test_file_list, test_labels, dictionary_files = parse_small_dataset(root_folder) 
     dictionary = build_dictionary(dictionary_files, dictionary_size, is_extended)
     print "Dictionary built", dictionary.shape
     print "Now traning.."
@@ -201,14 +237,16 @@ def main():
     parser.add_argument('-l', help="Number of SPM levels", default='3')
     parser.add_argument('-r', help="Root folder", default="/Users/qtc746/Documents/Courses/ComputerVision/Project/Dataset")
     parser.add_argument('-x', help="Use 128 length descriptors?", default=0)
-    parser.add_argument('-f', help="Temp folder to store intermediate results", default="/Users/qtc746/Documents/Courses/ComputerVision/Project/temP")
+    parser.add_argument('-f', help="Temp folder to store intermediate results", default="/Users/qtc746/Documents/Courses/ComputerVision/Project/temp")
+    parser.add_argument('-d', help="Use large dataset?", default='1')
     args = parser.parse_args()
     dictionary_size = args.__dict__['k']
     spm_levels = args.__dict__['l']
     root_folder = args.__dict__['r']
     is_extended = args.__dict__['x']
     temp_folder = args.__dict__['f']
-    spm_classification(dictionary_size, spm_levels, int(is_extended), root_folder, temp_folder)
+    large_dataset = args.__dict__['d']
+    spm_classification(dictionary_size, spm_levels, int(is_extended), root_folder, temp_folder, large_dataset)
 
 if __name__ == "__main__":
     main()

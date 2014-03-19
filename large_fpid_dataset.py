@@ -58,7 +58,7 @@ def train(trainingLabels, trainingFiles, dictionary, k):
         # Add it to training data
         trainingData.append(histogram)
 
-    model = svmutil.svm_train(trainingLabels, trainingData, '-s 0 -t 0 -g 1 -c 50')
+    model = svmutil.svm_train(trainingLabels, trainingData, '-s 0 -t 0 -g 1 -c 120')
 
     # Testing
     result, acc, vals = svmutil.svm_predict(trainingLabels, trainingData, model)
