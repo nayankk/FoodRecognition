@@ -6,7 +6,9 @@ import cv2
 import numpy as np
 import os
 import gc
-import svmutil
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score 
+from sklearn.metrics.pairwise import chi2_kernel
 
 categories = {}
 categories["Drink"] = 1
@@ -74,11 +76,13 @@ def train(trainingRootDir, dictionary):
                 # Add it to training data
                 trainingData.append(histogram)
 
-    model = svmutil.svm_train(labels, trainingData, '-s 0 -t 0 -g 1 -c 100')
+    model = SVC(C=120, gamma=1, kernel='linear')#chi2_kernel)
+    model.fit(trainingData, labels)
 
     # Testing
-    result, acc, vals = svmutil.svm_predict(labels, trainingData, model)
-    print acc
+    result = model.predict(trainingData)
+    acc = accuracy_score(result, labels)
+    print "Accuracy = ", acc*100
 
     return model
 
@@ -115,7 +119,10 @@ def test(testingRootDir, dictionary, model):
                 # Add it to training data
                 testingData.append(histogram)
 
-    result, acc, vals = svmutil.svm_predict(labels, testingData, model)
+    result = model.predict(testingData)
+    acc = accuracy_score(result, labels)
+    print "Accuracy = ", acc*100
+
     print acc
 
 def main():

@@ -219,7 +219,7 @@ def parse_large_dataset(root_folder):
     return trainfiles, trainlabels, testfiles, testlabels, dictionaryfiles
 
 def spm_classification(dictionary_size, spm_levels, is_extended, root_folder, temp_folder, large_dataset):
-    if large_dataset == 1:
+    if large_dataset == "1":
         train_file_list, train_labels, test_file_list, test_labels, dictionary_files = parse_large_dataset(root_folder)
     else:
         train_file_list, train_labels, test_file_list, test_labels, dictionary_files = parse_small_dataset(root_folder) 

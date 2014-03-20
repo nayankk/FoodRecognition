@@ -3,9 +3,11 @@
 import os
 import parse_dataset
 import cv2
-import svm
-import svmutil
 import numpy as np
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score 
+from sklearn.metrics.pairwise import chi2_kernel
+
 
 def findSurfDescriptor(filename):
     img = cv2.imread(filename)
@@ -58,11 +60,13 @@ def train(trainingLabels, trainingFiles, dictionary, k):
         # Add it to training data
         trainingData.append(histogram)
 
-    model = svmutil.svm_train(trainingLabels, trainingData, '-s 0 -t 0 -g 1 -c 120')
+    model = SVC(C=120, gamma=1, kernel=chi2_kernel)
+    model.fit(trainingData, trainingLabels)
 
     # Testing
-    result, acc, vals = svmutil.svm_predict(trainingLabels, trainingData, model)
-    print acc
+    result = model.predict(trainingData)
+    acc = accuracy_score(result, trainingLabels)
+    print "Accuracy = ", acc*100
 
     return model
 
@@ -94,8 +98,10 @@ def test(testingLabels, testingFiles, model, dictionary, k):
         # Add it to training data
         testingData.append(histogram)
 
-    result, acc, vals = svmutil.svm_predict(testingLabels, testingData, model)
-    print acc
+    result = model.predict(testingData)
+    acc = accuracy_score(result, testingLabels)
+    print "Accuracy = ", acc*100
+
 
 def main():
     print "Starting to build train set and test set"
